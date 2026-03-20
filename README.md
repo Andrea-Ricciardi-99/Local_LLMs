@@ -1,118 +1,143 @@
-# Local Qwen Coder with Aider CLI on Ubuntu 24.04
+# Local AI Coding Assistant — Offline Setup for Ubuntu 24.04
 
-This guide covers how to set up and run Qwen2.5-Coder models locally using `llama.cpp` as the backend server and `Aider` as the terminal-based AI coding assistant. This setup is specifically optimized for hardware with limited VRAM (e.g., 4GB RTX A500) and ample system RAM (32GB).
+Private, fully offline AI coding assistant powered by local Qwen models. No API keys, no cloud,
+no data leaving your machine. Uses `Aider` as the terminal frontend and either `llama.cpp` or
+`AirLLM` as the inference backend depending on your task.
 
-## 1. Prerequisites & Installation
+---
 
-### Install llama.cpp (Backend Server)
-Compile `llama.cpp` from source to enable strict memory controls and optimizations required for local inference.
-```bash
-sudo apt-get update
-sudo apt-get install pciutils build-essential cmake curl libcurl4-openssl-dev git-all -y
+## Which Workflow Should I Use?
 
-git clone https://github.com/ggml-org/llama.cpp
-cd llama.cpp
-cmake -B build -DBUILD_SHARED_LIBS=OFF -DGGML_CUDA=ON
-cmake --build build --config Release -j --clean-first --target llama-server
+| | llama.cpp | AirLLM |
+|---|---|---|
+| **Model size** | 3B or 7B (GGUF quantized) | 14B (full HuggingFace) |
+| **Generation speed** | 3–15 tokens/sec | 1–3 tokens/sec |
+| **Code intelligence** | Good | Excellent |
+| **Best for** | Fast iteration, quick edits | Complex architecture, design |
+| **Port** | 8001 | 8002 |
+| **Setup guide** | `llama_cpp_workflow/README.md` | `airllm_workflow/README.md` |
+
+> ⚠️ Never run both servers at the same time. They compete for the same 4GB of VRAM and will crash each other.
+
+---
+
+## Repository Structure
+
+```
+Local_LLM/
+├── llama_cpp_workflow/
+│   ├── README.md                  ← llama.cpp setup and launch guide
+│   ├── qwen3B_server_setup.sh     ← starts llama-server with Qwen-3B on port 8001
+│   └── qwen7B_server_setup.sh     ← starts llama-server with Qwen-7B on port 8001
+│
+├── airllm_workflow/
+│   ├── README.md                  ← AirLLM setup and launch guide
+│   ├── airllm_server.py           ← FastAPI OpenAI-compatible wrapper for AirLLM
+│   ├── airllm_server_setup.sh     ← activates venv and starts AirLLM server on port 8002
+│   └── airllm_env/                ← Python venv with pinned dependencies
+│
+└── README.md                      ← this file
 ```
 
-### Install Aider (Frontend CLI)
-Use the official Aider installation script to set up the CLI without conflicting with Ubuntu's PEP 668 restrictions.
+---
+
+## Install Aider (One-Time)
+
+Aider is the shared terminal frontend used by both workflows. Install it once system-wide:
+
 ```bash
 curl -LsSf https://aider.chat/install.sh | sh
 ```
 
 ---
 
-## 2. Download the Models (GGUF Format)
+## Running Aider
 
-Create a directory to store your models and download the 4-bit quantized versions (Q4_K_M) directly via `curl`. 
+### Step 1 — Start the inference server
+Pick one workflow and follow its `README.md` to start the server. Once running, you will see
+a confirmation line in that terminal. **Leave it open.**
 
-**Option A: Qwen2.5-Coder-3B (Recommended for Speed)**
-*Use this for fast, instant responses. Fits entirely in a 4GB GPU.*
+### Step 2 — Navigate to your project
 ```bash
-mkdir -p ~/Documents/unsloth/Qwen-3B
-cd ~/Documents/unsloth/Qwen-3B
-curl -L -o Qwen2.5-Coder-3B-Instruct-Q4_K_M.gguf "https://huggingface.co/bartowski/Qwen2.5-Coder-3B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-3B-Instruct-Q4_K_M.gguf"
+cd ~/your/ros2/workspace
 ```
 
-**Option B: Qwen2.5-Coder-7B (Recommended for Intelligence)**
-*Use this for complex C++/ROS2 logic. Requires CPU offloading and generates slower.*
+### Step 3 — Export the API variables
+Point Aider at the correct local server port:
+
 ```bash
-mkdir -p ~/Documents/unsloth/Qwen-7B
-cd ~/Documents/unsloth/Qwen-7B
-curl -L -o Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf "https://huggingface.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf"
-```
-
----
-
-## 3. Starting the Backend Server (Automated)
-
-Instead of manually typing the long server commands, use the provided bash scripts located in `~/Desktop/Local LLM/`. These scripts handle the exact CPU/GPU thread splitting and VRAM management required for your system.
-
-**For the 3B Model (100% GPU Offload):**
-```bash
-cd ~/Desktop/Local\ LLM/
-./qwen3B_server_setup.sh
-```
-
-**For the 7B Model (CPU/GPU Split for 4GB VRAM):**
-```bash
-cd ~/Desktop/Local\ LLM/
-./qwen7B_server_setup.sh
-```
-
-*(Note: Leave this terminal window open running the server while you code).*
-
----
-
-## 4. Run Aider using Architect Mode & No Auto-Commits
-
-Once the server is listening on port 8001, open a **new terminal window**, navigate to your ROS2 workspace, and launch Aider. 
-
-First, ensure Aider routes to your local server instead of OpenAI:
-```bash
+# For llama.cpp (port 8001):
 export OPENAI_API_BASE="http://127.0.0.1:8001/v1"
+
+# For AirLLM (port 8002):
+export OPENAI_API_BASE="http://127.0.0.1:8002/v1"
+
 export OPENAI_API_KEY="sk-dummy-key"
 ```
 
-**Launch Aider with the `--architect` and `--no-auto-commits` flags:**
+### Step 4 — Launch Aider
 ```bash
-# If using the 3B Server:
+# llama.cpp 3B (fast):
 aider --model openai/unsloth/Qwen-3B --architect --no-auto-commits
 
-# If using the 7B Server:
+# llama.cpp 7B (balanced):
 aider --model openai/unsloth/Qwen-7B --architect --no-auto-commits
+
+# AirLLM 14B (smart):
+aider --model openai/Qwen2.5-Coder-14B --architect --no-auto-commits
 ```
 
-### Why use `--architect`?
-Smaller local models (under 14B parameters) often fail to format file saves correctly while simultaneously trying to solve complex coding logic. Architect Mode splits the task in two:
-1. **The Architect:** Converses with you and plans the code logic naturally.
-2. **The Editor:** Aider automatically runs a hidden secondary prompt to format the Architect's plan into strict file edits. 
-This prevents the "LLM did not conform to edit format" error and ensures files are actually saved to your disk.
+---
+
+## Aider Workflow
+
+### Context Management
+Aider only reads files you explicitly add to its context. Always add a file before asking
+the AI to read or edit it.
+
+```
+/add src/my_node.cpp        → load a file into AI memory
+/drop src/my_node.cpp       → remove it to free up context tokens
+/clear                      → wipe the entire conversation history
+```
+
+### "Ask First, Edit Later" (Recommended)
+This is the safest way to work. The AI proposes changes for your review before touching any file.
+
+```
+/chat-mode ask    → AI enters read-only mode. It will plan and propose code but never write files.
+                    Ask your question or describe the feature you want.
+
+/chat-mode code   → AI gets write access. Type "apply this" or "do it" to authorize the edit.
+```
+
+### Flags Explained
+
+| Flag | Effect |
+|---|---|
+| `--architect` | Splits reasoning and file-editing into two separate AI calls. Prevents format errors on smaller local models. |
+| `--no-auto-commits` | Stops Aider from committing every AI edit to Git automatically. You commit manually when ready. |
+
+### Undoing Changes
+Because `--no-auto-commits` is enabled, `/undo` inside Aider will not work. To revert an
+unwanted AI edit, use Git directly in a separate terminal:
+
+```bash
+git restore src/my_node.cpp     # discard changes to a specific file
+git diff                        # review all pending AI changes before committing
+```
 
 ---
 
-## 5. Workflow: "Ask First, Edit Later" (Manual Authorization)
+## Persistent Environment Variables (Optional)
 
-Because `--no-auto-commits` stops Aider from touching Git, you maintain full control. To ensure the AI never modifies a file without your explicit authorization, use Aider's chat modes:
+To avoid exporting the API variables every time you open a new terminal, add your preferred
+server's export lines to your `~/.bashrc`:
 
-1. **Enter Ask Mode (Read-Only)**  
-   Type `/chat-mode ask` in the Aider prompt. In this mode, the AI is physically restricted from writing to your files.
-2. **Request the Code**  
-   Ask the AI to design your new feature or fix a bug. It will print the proposed code into the terminal for you to review.
-3. **Switch to Code Mode (Write Access)**  
-   Once you approve of the printed code, type `/chat-mode code` to give the AI file-write permissions again.
-4. **Authorize the Edit**  
-   Simply type "apply this" or "do it". Aider will remember the conversation and immediately inject the proposed changes into your files.
+```bash
+echo 'export OPENAI_API_BASE="http://127.0.0.1:8001/v1"' >> ~/.bashrc
+echo 'export OPENAI_API_KEY="sk-dummy-key"' >> ~/.bashrc
+source ~/.bashrc
+```
 
----
-
-## 6. Basic Aider Commands
-
-Inside the Aider terminal (`>` prompt), use these commands to manage your context:
-
-*   `/add src/my_node.cpp` : Adds a specific file to the AI's memory context. **Always do this before asking it to read or edit a file.**
-*   `/drop src/my_node.cpp` : Removes the file from memory to speed up processing and save tokens.
-*   `/undo` : Instantly reverts the last code change. *(Note: This command relies on Git. If you use `--no-auto-commits`, you must manually undo changes using `git restore` in a separate terminal).*
-*   `/clear` : Wipes the chat history so the AI doesn't get confused by past instructions.
+*(Change the port to 8002 if you primarily use the AirLLM workflow).*
