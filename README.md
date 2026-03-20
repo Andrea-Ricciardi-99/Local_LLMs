@@ -1,4 +1,4 @@
-# Local AI Coding Assistant — Offline Setup for Ubuntu 24.04
+# Local AI Coding Assistant - Offline Setup for Ubuntu 24.04
 
 Private, fully offline AI coding assistant powered by local Qwen models. No API keys, no cloud,
 no data leaving your machine. Uses `Aider` as the terminal frontend and either `llama.cpp` or
