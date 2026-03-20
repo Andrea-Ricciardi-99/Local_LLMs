@@ -140,3 +140,44 @@ source ~/.bashrc
 ```
 
 *(Change the port to 8002 if you primarily use the AirLLM workflow).*
+
+## Acknowledgements
+
+This setup is built entirely on the shoulders of three outstanding open-source projects.
+All credit for the underlying inference, tooling, and frontend goes to their respective authors.
+
+### 🦙 llama.cpp
+High-performance inference engine for running quantized GGUF models locally on CPU and GPU.
+Enables the fast 3B/7B workflow in this repo with full CUDA support and KV cache optimization.
+
+- **Repository:** [https://github.com/ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp)
+- **License:** MIT
+
+### 🌬️ AirLLM
+Memory-efficient inference library that streams large HuggingFace models layer-by-layer from
+disk to GPU. Enables running 14B+ parameter models on a single 4GB GPU without quantization,
+powering the high-intelligence workflow in this repo.
+
+- **Repository:** [https://github.com/lyogavin/airllm](https://github.com/lyogavin/airllm)
+- **Author:** Gavin Li
+- **License:** Apache 2.0
+- **Citation:**
+```bibtex
+@software{airllm2023,
+  author  = {Gavin Li},
+  title   = {AirLLM: scaling large language models on low-end commodity computers},
+  url     = {https://github.com/lyogavin/airllm/},
+  version = {0.0},
+  year    = {2023},
+}
+```
+
+### 🤖 Aider
+Open-source AI pair programmer that runs in the terminal. Handles Git-aware file editing,
+repo mapping, and the Architect/Editor workflow that makes local models reliable for
+real-world coding tasks.
+
+- **Repository:** [https://github.com/Aider-AI/aider](https://github.com/Aider-AI/aider)
+- **Author:** Paul Gauthier and contributors
+- **License:** Apache 2.0
+- **Website:** [https://aider.chat](https://aider.chat)
