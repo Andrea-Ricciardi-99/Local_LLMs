@@ -25,7 +25,7 @@ introduced in `transformers>=4.49`:
 
 ```bash
 pip install \
-  "transformers==4.48.3" \
+  "transformers==4.42.4" \
   "optimum==1.23.3" \
   "torch==2.3.0" \
   "accelerate>=0.20.3" \
