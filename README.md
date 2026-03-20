@@ -34,7 +34,6 @@ Local_LLM/
 │   ├── README.md                  ← AirLLM setup and launch guide
 │   ├── airllm_server.py           ← FastAPI OpenAI-compatible wrapper for AirLLM
 │   ├── airllm_server_setup.sh     ← activates venv and starts AirLLM server on port 8002
-│   └── airllm_env/                ← Python venv with pinned dependencies
 │
 └── README.md                      ← this file
 ```
