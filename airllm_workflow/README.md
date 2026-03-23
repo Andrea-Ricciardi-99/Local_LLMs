@@ -4,7 +4,7 @@ AirLLM enables running massive HuggingFace models (14B, 32B, 70B+) on a single 4
 
 Because this layer-swapping technique is slow (~4 to 12 seconds per token depending on model size), **AirLLM is not suitable for interactive chat or AI pair-programming tools like Aider.** 
 
-Instead, this repository provides an **Offline Batch Processing Workflow**. It is designed for asynchronous, unattended tasks where you need flagship-level intelligence (like a 70B model) to analyze large amounts of data, and you can afford to let the script run in the background for several hours or overnight.
+> Instead, this repository provides an **Offline Batch Processing Workflow**. It is designed for asynchronous, unattended tasks where you need flagship-level intelligence (like a 70B model) to analyze large amounts of data, and you can afford to let the script run in the background for several hours or overnight.
 
 ***
 
@@ -28,8 +28,7 @@ pip install \
   "optimum==1.23.3" \
   "torch==2.3.0" \
   "accelerate>=0.20.3" \
-  airllm fastapi uvicorn \
-  sentencepiece bitsandbytes scipy \
+  airllm sentencepiece bitsandbytes \
   einops tiktoken transformers_stream_generator
 ```
 
