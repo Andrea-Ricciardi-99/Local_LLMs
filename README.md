@@ -1,23 +1,20 @@
 # Local AI Coding Assistant - Offline Setup for Ubuntu 24.04
 
 Private, fully offline AI coding assistant powered by local Qwen models. No API keys, no cloud,
-no data leaving your machine. Uses `Aider` as the terminal frontend and either `llama.cpp` or
-`AirLLM` as the inference backend depending on your task.
+no data leaving your machine. Uses Aider + llama.cpp for fast, interactive terminal-based pair programming, and AirLLM for offline, large-scale batch processing when maximum model intelligence is required.
 
 ---
 
 ## Which Workflow Should I Use?
 
-| | llama.cpp | AirLLM |
+| | llama.cpp (Interactive) | AirLLM (Batch Processing) |
 |---|---|---|
-| **Model size** | 3B or 7B (GGUF quantized) | 14B (full HuggingFace) |
-| **Generation speed** | 3–15 tokens/sec | 1–3 tokens/sec |
-| **Code intelligence** | Good | Excellent |
-| **Best for** | Fast iteration, quick edits | Complex architecture, design |
-| **Port** | 8001 | 8002 |
+| **Model size** | 3B or 7B (GGUF quantized) | 70B+ (full HuggingFace) |
+| **Generation speed** | 15–20 tokens/sec | ~4–12 seconds per token |
+| **Use Case** | Real-time pair programming via Aider | Offline file analysis & code translation |
+| **Best for** | Fast iteration, writing and editing code | Massive architectural summaries, overnight tasks |
+| **Interface** | Aider Terminal | Python Batch Scripts |
 | **Setup guide** | `llama_cpp_workflow/README.md` | `airllm_workflow/README.md` |
-
-> ⚠️ Never run both servers at the same time. They compete for the same 4GB of VRAM and will crash each other.
 
 ---
 
@@ -31,9 +28,11 @@ Local_LLM/
 │   └── qwen7B_server_setup.sh     ← starts llama-server with Qwen-7B on port 8001
 │
 ├── airllm_workflow/
-│   ├── README.md                  ← AirLLM setup and launch guide
-│   ├── airllm_server.py           ← FastAPI OpenAI-compatible wrapper for AirLLM
-│   ├── airllm_server_setup.sh     ← activates venv and starts AirLLM server on port 8002
+│   ├── README.md                  ← AirLLM setup and batch execution guide
+│   ├── input_data/                ← Place files to be analyzed here
+│   ├── output_data/               ← AirLLM saves analysis results here
+│   ├── process_batch.py           ← Script: Analyzes files one by one
+│   └── process_all.py             ← Script: Analyzes all files as a single context
 │
 └── README.md                      ← this file
 ```
@@ -42,7 +41,7 @@ Local_LLM/
 
 ## Install Aider (One-Time)
 
-Aider is the shared terminal frontend used by both workflows. Install it once system-wide:
+Aider is the shared terminal frontend used by the `llama.cpp` workflow. Install it once system-wide:
 
 ```bash
 curl -LsSf https://aider.chat/install.sh | sh
@@ -53,8 +52,7 @@ curl -LsSf https://aider.chat/install.sh | sh
 ## Running Aider
 
 ### Step 1 — Start the inference server
-Pick one workflow and follow its `README.md` to start the server. Once running, you will see
-a confirmation line in that terminal. **Leave it open.**
+Follow the `llama_cpp_workflow/README.md` to start the inference server. Once running on port 8001, **leave that terminal open.**
 
 ### Step 2 — Navigate to your project
 ```bash
@@ -65,12 +63,8 @@ cd ~/your/ros2/workspace
 Point Aider at the correct local server port:
 
 ```bash
-# For llama.cpp (port 8001):
+# Point Aider at the local llama.cpp server:
 export OPENAI_API_BASE="http://127.0.0.1:8001/v1"
-
-# For AirLLM (port 8002):
-export OPENAI_API_BASE="http://127.0.0.1:8002/v1"
-
 export OPENAI_API_KEY="sk-dummy-key"
 ```
 
@@ -81,9 +75,6 @@ aider --model openai/unsloth/Qwen-3B --architect --no-auto-commits
 
 # llama.cpp 7B (balanced):
 aider --model openai/unsloth/Qwen-7B --architect --no-auto-commits
-
-# AirLLM 14B (smart):
-aider --model openai/Qwen2.5-Coder-14B --architect --no-auto-commits
 ```
 
 ---
@@ -139,7 +130,7 @@ echo 'export OPENAI_API_KEY="sk-dummy-key"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
-*(Change the port to 8002 if you primarily use the AirLLM workflow).*
+*(This ensures Aider always connects to your local llama.cpp instance automatically).*
 
 ## Acknowledgements
 
@@ -154,9 +145,7 @@ Enables the fast 3B/7B workflow in this repo with full CUDA support and KV cache
 - **License:** MIT
 
 ### 🌬️ AirLLM
-Memory-efficient inference library that streams large HuggingFace models layer-by-layer from
-disk to GPU. Enables running 14B+ parameter models on a single 4GB GPU without quantization,
-powering the high-intelligence workflow in this repo.
+Enables running 70B+ parameter models on a single 4GB GPU without quantization, powering the offline batch-processing and deep architectural analysis workflows in this repo.
 
 - **Repository:** [https://github.com/lyogavin/airllm](https://github.com/lyogavin/airllm)
 - **Author:** Gavin Li
